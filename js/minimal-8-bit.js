@@ -29,22 +29,29 @@ class Memory {
 class Stack {
     constructor(size) {
         this.stack = new Uint8Array(size);
-        this.pointer = 0
+        this.pointer = 0;
     }
 
     add(value) {
         if (this.pointer >= this.stack.length) {
             this.pointer = 0
         }
-        this.stack[this.pointer++] = value;
+        this.stack[this.pointer] = value;
+        this.pointer++
     }
 
     drop() {
         if (this.pointer === 0) {
-            return;
+            return
         }
         this.pointer--
-        return this.stack[this.pointer]
+    }
+
+    peek() {
+        if (this.pointer === 0) {
+            return undefined
+        }
+        return this.stack[this.pointer - 1]
     }
 }
 
@@ -75,10 +82,10 @@ class CPU {
         const operations = [
             this.LDXv, this.LDXa, this.LDXi, this.LDAv, this.STAa, this.STAi,
             this.ADD,
-            this.AND, this.XOR, '',
+            this.AND, this.OR, this.ASL,
             this.JUM, this.JCO, '', this.JOV, 
             this.OUT, this.CLA,
-            '', this.RET, this.SDR
+            this.JUX, this.RET, this.SDR
         ];
 
         if (opcode < operations.length) {
@@ -97,6 +104,7 @@ class CPU {
 
             for (let i = 0; i < stepsPerFrame; i++) {
                 this.execute(this.ram.read(this.Counter));
+                this.checkFlags()
                 if (!this.running) break;
             }
 
@@ -105,13 +113,10 @@ class CPU {
         requestAnimationFrame(step);
     }
 
-    stopClock() {
-        this.running = false
-    }
-
     step() {
         console.log(`X: ${this.X}, A: ${this.A}, step: ${this.Counter}, opcode: ${this.ram.read(this.Counter)}`, this.ram.memory)
         this.execute(this.ram.read(this.Counter))
+        this.checkFlags()
     }
 
     // -- OPERATIONS
@@ -120,24 +125,18 @@ class CPU {
     LDXv() {
         this.Counter++
         this.X = this.ram.read(this.Counter++)
-
-        this.checkFlags()
     }
 
     // LDX address
     LDXa() {
         this.Counter++
         this.X = this.ram.read(this.ram.read(this.Counter++))
-
-        this.checkFlags()
     }
 
     // LDX indexed by A
     LDXi() {
         this.X = this.ram.read(this.A)
         this.Counter++
-
-        this.checkFlags()
     }
 
     // LDA value
@@ -145,8 +144,6 @@ class CPU {
         this.Counter++
         this.A = this.ram.read(this.Counter++)
         this.Equal = (this.A === 0)
-
-        this.checkFlags()
     }
 
     // STA address
@@ -165,24 +162,24 @@ class CPU {
     ADD() {
         this.A += this.X
         this.Counter++
-
-        this.checkFlags()
     }
 
     // AND (modifies A)
     AND() {
         this.A &= this.X
         this.Counter++
-
-        this.checkFlags()
     }
 
-    // XOR (modifies A; useful for branching with the zero flag)
-    XOR() {
-        this.A ^= this.X
+    // OR (modifies A; useful for combining bits)
+    OR() {
+        this.A |= this.X
         this.Counter++
+    }
 
-        this.checkFlags()
+    // ASL (modifies A, moves it up a bit - so 1 becomes 10, and 11 becomes 110.)
+    ASL() {
+        this.A = (this.A << 1) & 0xFF
+        this.Counter++
     }
 
     // JUMP (saving the starting point in stack)
@@ -194,33 +191,27 @@ class CPU {
 
     // CONDITIONAL JUMP (if A and X are equal; saving the starting point in stack)
     JCO() {
-        this.stack.add(this.Counter)
-        this.Counter++
-
         if (this.Equal) {
+            this.stack.add(this.Counter++)
             this.Counter = this.ram.read(this.Counter++)    // jumps
             return
         }      
-        
-        this.Counter ++               // or moves on.           
+        this.Counter += 2               // or moves on.           
     }
 
     // OVERFLOW JUMP (if A and X are equal; saving the starting point in stack)
     JOV() {
-        this.stack.add(this.Counter)
-        this.Counter++
-
         if (this.Overflow) {
-            this.Counter = this.ram.read(this.Counter++)    // jumps 
+            this.stack.add(this.Counter++)
+            this.Counter = this.ram.read(this.Counter++)    // jumps
             return
         }      
-        
-        this.Counter ++               // or moves on.           
+        this.Counter += 2               // or moves on.           
     }
 
     // OUT
     OUT() {
-        this.screen.innerHTML += String.fromCharCode(this.ram.read(0xF0))
+        this.screen.innerHTML += String.fromCharCode(this.ram.read(0xFD))
         this.Counter++
     }
 
@@ -230,16 +221,23 @@ class CPU {
         this.Counter++
     }
 
-    // returns to the line *after* the last jump
-    RET() {
-        this.Counter = this.stack.drop() + 2
+    // JUX: jump to X
+    JUX() {
+        this.stack.add(this.Counter)           
+        this.Counter = this.X               // jumps
     }
+
+    RET() {
+        this.Counter = this.stack.peek() + 2
+        this.stack.drop()
+    }    
 
     // drops the last value added to the stack without consequences
     SDR() {
-        this.stack.drop()
+        this.Counter++;
+        this.stack.drop();
     }
-
+    
     // helper:
     checkFlags() {
         this.Equal = (this.A === this.X)

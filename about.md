@@ -10,10 +10,15 @@ This is a small fun project to understand how microprocessors work.
 
 # special addresses
 
-0xF0            I/O byte
+0x00 - 0xF7     user memory
 
-0xF2 - 0xF9     text or command memory
-0xFF            text memory index
+0xF8            return output for converter
+0xF9            "external input"
+0xFA - 0xFC     text memory (for three-byte commands)
+0xFD            I/O byte
+
+0xFE            system loop: working address
+0xFF            index
 
 # opcodes (16)
 
@@ -28,7 +33,8 @@ This is a small fun project to understand how microprocessors work.
 0x6         A = A + X
 
 0x7         Perform a bitwise AND between X and A (modifies A).
-0x8         Perform a bitwise XOR between X and A (modifies A).
+0x8         Perform a bitwise OR between X and A (modifies A).
+0x9         ASL (modifies A)
 
 0xA a       Store return address in stack and jump to the address a.
 0xB a       Store return address in stack and jump to the address a if the equal flag is on.
@@ -37,5 +43,6 @@ This is a small fun project to understand how microprocessors work.
 0xE         Output the value of the I/O byte (0xF0).
 0xF         Set A to 0.
 
+0x10        Store return address in stack and jump to the address in X.
 0x11        Return.
 0x12        Remove top item from stack.

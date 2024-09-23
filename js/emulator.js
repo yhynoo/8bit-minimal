@@ -1,8 +1,9 @@
 const cpu = new CPU()
 cpu.ram.load(0x00, io)
-cpu.ram.load(0x30, memory_display)
-// cpu.ram.load(0x60, make_hex)
-cpu.ram.load(0x80, hex_converter)
+cpu.ram.load(0x30, execution)
+cpu.ram.load(0x50, commands)
+cpu.ram.load(0x80, hex_maker)
+cpu.ram.load(0x90, hex_converter)
 
 // I/O and reset processing
 
@@ -17,5 +18,5 @@ document.addEventListener('keydown', (event) => {
         return
     }
 
-    cpu.ram.write(0xF0, event.key.charCodeAt(0))
+    cpu.ram.write(IO, event.key.toUpperCase().charCodeAt(0))
 })
