@@ -1,12 +1,11 @@
 This is a small fun project to understand how microprocessors work.
 
-# architecture
+# idea
 
-- X (general) and A (arithmetic) registers
-- equal (A = X) and overflow flag
-
+- X (general) and A (arithmetic) registers; equal (A = X) and A overflow flag
 - program counter
-- 8 byte stack
+
+- 256 bytes of memory, 16 opcodes.
 
 # special addresses
 
@@ -36,13 +35,10 @@ This is a small fun project to understand how microprocessors work.
 0x8         Perform a bitwise OR between X and A (modifies A).
 0x9         ASL (modifies A)
 
-0xA a       Store return address in stack and jump to the address a.
-0xB a       Store return address in stack and jump to the address a if the equal flag is on.
-0xD a       Store return address in stack and jump to the address a if the overflow flag is on.
+0xA a       Jump to the address a.
+0xB         Jump to the address in X.
+0xC a       Jump to the address a if the equal flag is on.
+0xD a       Jump to the address a if the A overflow flag is on.
 
 0xE         Output the value of the I/O byte (0xF0).
 0xF         Set A to 0.
-
-0x10        Store return address in stack and jump to the address in X.
-0x11        Return.
-0x12        Remove top item from stack.

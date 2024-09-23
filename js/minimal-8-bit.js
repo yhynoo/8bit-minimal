@@ -1,9 +1,3 @@
-// Memory total: 256 bytes
-
-// Map:
-//      RAM:                0x00 - 0xEF
-//      keyboard input:     0xF0
-
 class Memory {
     constructor(size) {
         this.memory = new Uint8Array(size);
@@ -26,39 +20,9 @@ class Memory {
     }
 }
 
-class Stack {
-    constructor(size) {
-        this.stack = new Uint8Array(size);
-        this.pointer = 0;
-    }
-
-    add(value) {
-        if (this.pointer >= this.stack.length) {
-            this.pointer = 0
-        }
-        this.stack[this.pointer] = value;
-        this.pointer++
-    }
-
-    drop() {
-        if (this.pointer === 0) {
-            return
-        }
-        this.pointer--
-    }
-
-    peek() {
-        if (this.pointer === 0) {
-            return undefined
-        }
-        return this.stack[this.pointer - 1]
-    }
-}
-
 class CPU {
     constructor() {
         this.ram = new Memory(0x100)
-        this.stack = new Stack(0x8)
         this.screen = document.getElementsByClassName('screen')[0]
         
         this.running = false
@@ -68,13 +32,12 @@ class CPU {
     reset() {
         this.A = 0;
         this.X = 0;
-
         this.Counter = 0;
         this.Equal = true;
         this.Overflow = false;
         
         // restart monitor
-        this.screen.textContent = 'ok.\n'
+        this.screen.textContent = ':) \n\n'
         this.startClock()
     }
 
@@ -83,9 +46,8 @@ class CPU {
             this.LDXv, this.LDXa, this.LDXi, this.LDAv, this.STAa, this.STAi,
             this.ADD,
             this.AND, this.OR, this.ASL,
-            this.JUM, this.JCO, '', this.JOV, 
-            this.OUT, this.CLA,
-            this.JUX, this.RET, this.SDR
+            this.JUM, this.JUX, this.JCO, this.JOV, 
+            this.OUT, this.CLA
         ];
 
         if (opcode < operations.length) {
@@ -184,29 +146,33 @@ class CPU {
 
     // JUMP (saving the starting point in stack)
     JUM() {
-        this.stack.add(this.Counter)
         this.Counter++              
         this.Counter = this.ram.read(this.Counter++)        // jumps
     }
 
+    // JUX: jump to X
+    JUX() {  
+        this.Counter = this.X               // jumps
+    }
+
     // CONDITIONAL JUMP (if A and X are equal; saving the starting point in stack)
     JCO() {
+        this.Counter++
         if (this.Equal) {
-            this.stack.add(this.Counter++)
             this.Counter = this.ram.read(this.Counter++)    // jumps
             return
         }      
-        this.Counter += 2               // or moves on.           
+        this.Counter++               // or moves on.           
     }
 
     // OVERFLOW JUMP (if A and X are equal; saving the starting point in stack)
     JOV() {
+        this.Counter++
         if (this.Overflow) {
-            this.stack.add(this.Counter++)
             this.Counter = this.ram.read(this.Counter++)    // jumps
             return
         }      
-        this.Counter += 2               // or moves on.           
+        this.Counter++               // or moves on.           
     }
 
     // OUT
@@ -219,23 +185,6 @@ class CPU {
     CLA() {
         this.A = 0
         this.Counter++
-    }
-
-    // JUX: jump to X
-    JUX() {
-        this.stack.add(this.Counter)           
-        this.Counter = this.X               // jumps
-    }
-
-    RET() {
-        this.Counter = this.stack.peek() + 2
-        this.stack.drop()
-    }    
-
-    // drops the last value added to the stack without consequences
-    SDR() {
-        this.Counter++;
-        this.stack.drop();
     }
     
     // helper:
