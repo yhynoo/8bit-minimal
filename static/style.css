@@ -1,0 +1,40 @@
+* {
+    background-color: #222;
+}
+
+.body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.screen {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    font-family: 'Menlo', monospace;
+    font-size: 12px;
+    color: whitesmoke;
+
+    height: calc(384px + 2 * 1em + 2 * 16px);
+    width: 640px;
+
+    background-color: #282828;
+    border: 16px solid #383838;
+    line-height: 16px;
+
+    border-radius: 6px;
+    padding: 1em;
+
+    box-sizing: border-box;
+    white-space: pre-wrap;
+
+    /* New properties to wrap long text sequences */
+    word-break: break-word; /* Force long sequences to break */
+    overflow-wrap: break-word; /* Allows breaking of long words if needed */
+
+    overflow-y: auto;
+    overflow-x: hidden;
+}
